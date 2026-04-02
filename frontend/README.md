@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ChatBot – Neobrutalism
+
+A fully responsive chat application built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS**, **ESLint**, and **Prettier**.
+
+## Tech Stack
+
+| Tool | Version |
+|------|---------|
+| Next.js | 14.2.3 (App Router) |
+| React | 18 |
+| TypeScript | 5 |
+| Tailwind CSS | 3.4 |
+| ESLint | 8 + eslint-config-next |
+| Prettier | 3 + prettier-plugin-tailwindcss |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── layout.tsx          # Root layout (fonts, metadata)
+│   ├── page.tsx            # Redirects → /login
+│   ├── globals.css         # Tailwind + neobrutalism utilities
+│   ├── login/
+│   │   └── page.tsx        # Login screen (desktop)
+│   ├── signup/
+│   │   └── page.tsx        # Sign-up screen
+│   └── dashboard/
+│       ├── layout.tsx      # Dashboard layout (header + sidebar + bottom nav)
+│       └── page.tsx        # Chat view
+├── components/
+│   ├── ui/
+│   │   └── Logo.tsx        # Reusable logo component
+│   ├── layout/
+│   │   ├── DashboardHeader.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── BottomNav.tsx   # Mobile bottom navigation
+│   └── chat/
+│       ├── ChatWindow.tsx  # Messages thread + input
+│       └── InfoPanel.tsx   # Right panel (profile, files, media)
+├── lib/
+│   ├── data.ts             # Mock data (users, messages, files)
+│   └── utils.ts            # cn() helper (clsx + tailwind-merge)
+└── types/
+    └── index.ts            # TypeScript interfaces
+```
+
+## Pages / Routes
+
+| Route | Description |
+|-------|-------------|
+| `/` | Redirects to `/login` |
+| `/login` | Login screen |
+| `/signup` | Create account screen |
+| `/dashboard` | Chat dashboard (3-column layout) |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Lint
+npm run lint
+
+# Format with Prettier
+npm run format
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Design System – Neobrutalism
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All design tokens are defined in `tailwind.config.ts`:
 
-## Learn More
+| Token | Value |
+|-------|-------|
+| `accent-yellow` | `#FFD60A` |
+| `accent-orange` | `#FF7A00` |
+| `primary` | `#ec5b13` |
+| `background-light` | `#FFF9E6` |
 
-To learn more about Next.js, take a look at the following resources:
+Custom CSS utility classes in `globals.css`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `.neo-border` – 4px solid black border  
+- `.neo-shadow` – 8px hard offset shadow  
+- `.neo-shadow-sm` – 4px hard offset shadow  
+- `.neo-shadow-hover` – hover translate + shadow shrink  
+- `.neo-shadow-active` – active translate + shadow remove  
+- `.editorial-shadow` – 4px dark editorial shadow  
+- `.editorial-active` – active press effect  
