@@ -105,20 +105,26 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="neo-border neo-shadow neo-button mt-4 flex h-16 w-full items-center justify-center gap-2 bg-accent-yellow font-poppins text-xl font-bold transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-neo"
+              className="neo-border neo-shadow neo-button relative mt-4 flex h-16 w-full items-center justify-center gap-2 bg-accent-yellow font-poppins text-xl font-bold transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-neo"
+              translate="no"
             >
-              {isSubmitting ? (
-                <span className="material-symbols-outlined animate-spin text-2xl">
-                  autorenew
+              <span
+                className={`flex items-center gap-2 ${
+                  isSubmitting ? "invisible" : "visible"
+                }`}
+              >
+                <span>LOG IN</span>
+                <span className="material-symbols-outlined font-bold">
+                  arrow_forward
                 </span>
-              ) : (
-                <>
-                  LOG IN
-                  <span className="material-symbols-outlined font-bold">
-                    arrow_forward
-                  </span>
-                </>
-              )}
+              </span>
+              <span
+                className={`material-symbols-outlined absolute text-2xl ${
+                  isSubmitting ? "animate-spin visible" : "invisible"
+                }`}
+              >
+                autorenew
+              </span>
             </button>
           </form>
 

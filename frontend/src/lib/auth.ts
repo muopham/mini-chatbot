@@ -1,4 +1,5 @@
 import api from "./axios";
+import type { User } from "@/types/user";
 
 export const auth = {
   signUp: async (
@@ -27,6 +28,16 @@ export const auth = {
       { withCredentials: true }
     );
     return response.data;
+  },
+
+  refresh: async () => {
+    const res = await api.post("/auth/refresh", { withCredentials: true });
+    return res.data.accessToken;
+  },
+
+  fetchMe: async () => {
+    const res = await api.get("/auth/me", { withCredentials: true });
+    return res.data;
   },
 
   logOut: async () => {
