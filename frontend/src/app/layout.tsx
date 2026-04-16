@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { SocketInitializer } from "@/providers/SocketInitializer";
 
 const publicSans = Public_Sans({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function RootLayout({
       <body
         className={`${publicSans.variable} ${poppins.variable} ${inter.variable} ${plusJakarta.variable} min-h-screen bg-background-light text-on-surface`}
       >
+        <SocketInitializer />
         <Toaster richColors />
         {children}
       </body>

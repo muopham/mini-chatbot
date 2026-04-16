@@ -22,33 +22,6 @@ export default function Sidebar() {
   };
   return (
     <aside className="sticky top-[72px] hidden h-[calc(100vh-72px)] w-80 flex-col overflow-y-auto border-r-4 border-black bg-surface-container p-6 dark:bg-stone-900 md:flex">
-      <div className="mb-8">
-        <h2 className="mb-1 font-headline text-xl font-black uppercase tracking-tighter">
-          Conversations
-        </h2>
-        <p className="font-headline text-xs font-bold uppercase tracking-widest text-stone-500">
-          Real-time Editorial
-        </p>
-      </div>
-
-      {/* Nav */}
-      <nav className="mb-10 flex flex-col gap-2">
-        {navLinks.map((link) => (
-          <Link
-            key={link.label}
-            href={link.href}
-            className={`flex items-center px-4 py-3 font-body text-sm font-bold uppercase tracking-widest transition-colors ${
-              link.active
-                ? "translate-x-1 border-2 border-black bg-accent-yellow text-black"
-                : "text-stone-600 hover:bg-background-light dark:text-stone-400"
-            }`}
-          >
-            <span className="material-symbols-outlined mr-3">{link.icon}</span>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-
       {/* Conversation list */}
       <div className="space-y-4">
         {conversations.map((conv, i) => (

@@ -14,6 +14,7 @@ const config: Config = {
         "accent-yellow": "#FFD60A",
         "accent-orange": "#FF7A00",
         "background-light": "#FFF9E6",
+        background: "#fff9e8",
         "background-dark": "#221610",
         "surface-container": "#f4eedb",
         "surface-container-low": "#f9f3e1",

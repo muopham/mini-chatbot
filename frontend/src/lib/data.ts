@@ -78,6 +78,38 @@ export const messages: Message[] = [
     type: "text",
   },
   {
+    id: "msg-2",
+    content:
+      "Definitely Neobrutalist. The hard shadows and thick strokes will make it stand out from all the soft SaaS designs out there.",
+    senderId: "me",
+    timestamp: "10:45 AM",
+    type: "text",
+  },
+  {
+    id: "msg-2",
+    content:
+      "Definitely Neobrutalist. The hard shadows and thick strokes will make it stand out from all the soft SaaS designs out there.",
+    senderId: "me",
+    timestamp: "10:45 AM",
+    type: "text",
+  },
+  {
+    id: "msg-2",
+    content:
+      "Definitely Neobrutalist. The hard shadows and thick strokes will make it stand out from all the soft SaaS designs out there.",
+    senderId: "me",
+    timestamp: "10:45 AM",
+    type: "text",
+  },
+  {
+    id: "msg-2",
+    content:
+      "Definitely Neobrutalist. The hard shadows and thick strokes will make it stand out from all the soft SaaS designs out there.",
+    senderId: "me",
+    timestamp: "10:45 AM",
+    type: "text",
+  },
+  {
     id: "msg-3",
     content: "",
     senderId: "anna",
@@ -111,3 +143,6 @@ export const mediaAssets: string[] = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuBYlUqkzRDyo8mDxomYYZPCYCALYPjkli6hRQBhGXhw31aYyMBCeO7cScY4jSewg3AM0t8OA1qOwF9bAt9e9fnpHNxf69XbVjAtXYE6HkbJQve-Q6fHF7FMecrGPC2SE4XfN2CnUKf-jesCMJYBYFZTzMVsXCTKT0tY3A2E5ZxhzWnkpiJ-t7h6vT-0ZO6ARQe4lDdy8Bq2Zwn4LpPw2Ay0OjaQlgoi4fAfmQUH79v6L_ceaJFo1rbqPYJzYwI_LqdE03MLWoRh_IOY",
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCAUCS_-GaQX8gKuX7Pq92QFsWQf_FDPHIpiZscioCTQUA9X8a_8nLWzSyFTjRadWQqVdGkWpWjX-iqTeIYmzUp6FymN0_kixv0b3ZUN2Wi0Quk_3T-mJz3AuccWNtbZf6t39Nk1TvAgnh2YGQQRanYI8Ou65QWTGWG8hVGM8sq77X1nr7hzNzJlKRdzJSPtZfwXl5zs-sR-OY2nT7AGDuRNN-X61VuS_Ci_TiXMdRKUzqDIVx4y6m4oOn9KCaHgvqZMQXxTLW8YGZq",
 ];
+
+export const avatarUrl: string =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCxXONw2_tjpuK327eKsgDQmA5N2_J8ul-ToKV5P-G1sAgzetDAmFdio7S2IhEHzVOEb4cFsGGu3qG3DLOn6jmuKWeDp21eJW1ZaXv5xu0AMDQEzWPU8bnxryGjDnI4szxWxm1FxuNaQ32UXBwjx_jbuSRUHqXDAAeRhqdfw7CkZeEN2A-dwVNVk07dQBOEuYUKaDhQV7mEJ6IqIicF3pKuRl9yJISkLgDLqNYiX_WeVsFvEPmnddHSpjTUG5BGk1r0r1f2tjvuJX58";

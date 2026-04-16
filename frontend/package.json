@@ -11,15 +11,21 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@hookform/resolvers": "^5.2.2",
     "axios": "^1.14.0",
     "clsx": "^2.1.1",
+    "lucide-react": "^1.7.0",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.72.0",
+    "react-infinite-scroll-component": "^7.0.1",
+    "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.3.0",
+    "use-debounce": "^10.1.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
