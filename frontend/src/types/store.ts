@@ -10,10 +10,10 @@ export interface AuthState {
  setAccessToken: (accessToken: string | null) => void;
  clear: () => void;
  signUp: (
- email: string,
- password: string,
- displayName: string,
- username: string
+  email: string,
+  password: string,
+  displayName: string,
+  username: string
  ) => Promise<void>;
  signIn: (username: string, password: string) => Promise<void>;
  logOut: () => Promise<void>;
@@ -24,13 +24,13 @@ export interface AuthState {
 export interface ChatState {
  conversations: Conversation[];
  messages: Record<
- string,
- {
- items: Message[];
- hasMore: boolean;
- nextCursor?: string | null;
- didFetch?: boolean;
- }
+  string,
+  {
+   items: Message[];
+   hasMore: boolean;
+   nextCursor?: string | null;
+   didFetch?: boolean;
+  }
  >;
  activeConversationId: string | null;
  converLoading: boolean;
@@ -39,17 +39,17 @@ export interface ChatState {
  reset: () => void;
  setActiveConversation: (id: string | null) => void;
  fetchConversation: () => void;
- fetchMessages: (conversationId?: string) => void;
+ fetchMessages: (conversationId?: string) => Promise<void>;
  sendDirectMessage: (
- recipientId: string,
- content: string,
- imgUrl?: string
- ) => void;
+  recipientId: string,
+  content: string,
+  imgUrl?: string
+ ) => Promise<void>;
  sendGroupMessage: (
- conversationId: string,
- content: string,
- imgUrl?: string
- ) => void;
+  conversationId: string,
+  content: string,
+  imgUrl?: string
+ ) => Promise<void>;
  addMessage: (message: Message) => Promise<void>;
  updateConversation: (conversation: Partial<Conversation>) => void;
  setTyping: (conversationId: string, userId: string, username: string) => void;

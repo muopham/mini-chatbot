@@ -32,29 +32,36 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
  // New message
  socket.on("new-message", ({ message, conversation, unreadCounts }) => {
- useChatStore.getState().addMessage(message);
+ // Get sender's displayName from participants already in the store
+ const { conversations } = useChatStore.getState();
+ const existingConvo = conversations.find((c) => c._id === conversation._id);
+ const senderParticipant = existingConvo?.participants?.find(
+  (p) => p._id === conversation.lastMessage?.senderId
+ );
+
  const lastMessage = {
- _id: conversation.lastMessage._id,
- content: conversation.lastMessage.content,
- createdAt: conversation.lastMessage.createdAt,
- sender: {
- _id: conversation.lastMessage.senderId,
- displayName: "",
- avatarUrl: null,
- },
+  _id: conversation.lastMessage._id,
+  content: conversation.lastMessage.content,
+  createdAt: conversation.lastMessage.createdAt,
+  sender: {
+   _id: conversation.lastMessage.senderId,
+   displayName: senderParticipant?.displayName ?? "",
+   avatarUrl: senderParticipant?.avatarUrl ?? null,
+  },
  };
 
  const updateConversation = {
- ...conversation,
- lastMessage,
- unreadCounts,
+  ...conversation,
+  lastMessage,
+  unreadCounts,
  };
 
  if (
- useChatStore.getState().activeConversationId === message.conversationId
+  useChatStore.getState().activeConversationId === message.conversationId
  ) {
- useChatStore.getState().markAsSeen();
+  useChatStore.getState().markAsSeen();
  }
+ useChatStore.getState().addMessage(message);
  useChatStore.getState().updateConversation(updateConversation);
  });
 

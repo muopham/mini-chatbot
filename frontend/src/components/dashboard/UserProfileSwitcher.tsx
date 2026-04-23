@@ -38,7 +38,7 @@ export default function UserProfileSwitcher() {
         {/* Right icon */}
         <EllipsisVertical />
       </div>
-      <ProfileModal isOpen={open} onClose={() => setOpen(false)} user={user!} />
+      <ProfileModal isOpen={open} onClose={() => setOpen(false)} />
     </>
   );
 }

@@ -87,17 +87,35 @@ export const useChatStore = create<ChatState>()(
       sendDirectMessage: async (recipientId, content, imgUrl) => {
         try {
           const { activeConversationId } = get();
-          await chat.sendDirectMessage(
+          const { user } = useAuthStore.getState();
+
+          const message = await chat.sendDirectMessage(
             recipientId,
             content,
             imgUrl,
             activeConversationId || undefined
           );
-          set((state) => ({
-            conversations: state.conversations.map((c) =>
-              c._id === activeConversationId ? { ...c, seenBy: [] } : c
-            ),
-          }));
+
+          // Add message to store immediately — don't wait for socket
+          if (message && activeConversationId) {
+            set((state) => {
+              const current = state.messages[activeConversationId];
+              if (!current) return state;
+              if (current.items.some((m) => m._id === message._id)) return state;
+              return {
+                messages: {
+                  ...state.messages,
+                  [activeConversationId]: {
+                    ...current,
+                    items: [...current.items, { ...message, isOwn: true }],
+                  },
+                },
+                conversations: state.conversations.map((c) =>
+                  c._id === activeConversationId ? { ...c, seenBy: [] } : c
+                ),
+              };
+            });
+          }
         } catch (error) {
           console.error(
             "An error occurred while sending a direct message",
@@ -108,12 +126,27 @@ export const useChatStore = create<ChatState>()(
 
       sendGroupMessage: async (conversationId, content, imgUrl) => {
         try {
-          await chat.sendGroupMessage(conversationId, content, imgUrl);
-          set((state) => ({
-            conversations: state.conversations.map((c) =>
-              c._id === get().activeConversationId ? { ...c, seenBy: [] } : c
-            ),
-          }));
+          const message = await chat.sendGroupMessage(conversationId, content, imgUrl);
+
+          if (message) {
+            set((state) => {
+              const current = state.messages[conversationId];
+              if (!current) return state;
+              if (current.items.some((m) => m._id === message._id)) return state;
+              return {
+                messages: {
+                  ...state.messages,
+                  [conversationId]: {
+                    ...current,
+                    items: [...current.items, { ...message, isOwn: true }],
+                  },
+                },
+                conversations: state.conversations.map((c) =>
+                  c._id === conversationId ? { ...c, seenBy: [] } : c
+                ),
+              };
+            });
+          }
         } catch (error) {
           console.error(
             "An error occurred while sending a group message",
@@ -125,29 +158,29 @@ export const useChatStore = create<ChatState>()(
       addMessage: async (message) => {
         try {
           const { user } = useAuthStore.getState();
-          const { fetchMessages } = get();
           message.isOwn = message.senderId === user?.id;
           const conversationId = message.conversationId;
 
-          let prevItems = get().messages[conversationId]?.items ?? [];
-          if (prevItems.length === 0) {
-            await fetchMessages(message.conversationId);
-            prevItems = get().messages[conversationId]?.items ?? [];
+          // If no cache at all, fetch first
+          const existing = get().messages[conversationId];
+          if (!existing?.didFetch && !existing?.items?.length) {
+            await get().fetchMessages(conversationId);
           }
 
+          // Use set(state => ...) to always read current state — avoids stale closure
           set((state) => {
-            if (prevItems.some((m) => m._id === message._id)) {
-              return state;
-            }
+            const currentItems = state.messages[conversationId]?.items ?? [];
+            if (currentItems.some((m) => m._id === message._id)) return state;
 
             return {
               messages: {
                 ...state.messages,
                 [conversationId]: {
-                  items: [...prevItems, message],
-                  hasMore: state.messages[conversationId].hasMore,
-                  nextCursor:
-                    state.messages[conversationId].nextCursor ?? undefined,
+                  ...state.messages[conversationId],
+                  items: [...currentItems, message],
+                  hasMore: state.messages[conversationId]?.hasMore ?? false,
+                  nextCursor: state.messages[conversationId]?.nextCursor ?? undefined,
+                  didFetch: true,
                 },
               },
             };
@@ -225,7 +258,11 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: "chat-storage",
-      partialize: (state) => ({ conversations: state.conversations }),
+      partialize: (state) => ({
+        // Only persist activeConversationId to remember selected chat
+        activeConversationId: state.activeConversationId,
+        // Do NOT persist conversations or messages — always fetch fresh
+      }),
     }
   )
 );
