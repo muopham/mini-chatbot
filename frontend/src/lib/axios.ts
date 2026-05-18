@@ -5,7 +5,7 @@ const api = axios.create({
   baseURL:
     process.env.NODE_ENV === "development"
       ? "http://localhost:3001/api"
-      : "/api",
+      : process.env.NEXT_PUBLIC_API_URL + "/api",
   withCredentials: true,
 });
 
@@ -38,7 +38,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const res = await api.post("/auth/refresh", {}, { withCredentials: true });
+        const res = await api.post(
+          "/auth/refresh",
+          {},
+          { withCredentials: true }
+        );
         const newAccessToken = res.data.accessToken;
         useAuthStore.getState().setAccessToken(newAccessToken);
 

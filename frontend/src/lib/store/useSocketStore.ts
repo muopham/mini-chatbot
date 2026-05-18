@@ -4,7 +4,7 @@ import { useAuthStore } from "./useAuthStore";
 import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
 
-const baseURL = process.env.NEXT_PUBLIC_SOCKET_URL;
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
