@@ -74,7 +74,10 @@ export default function DashboardLayout({
             : "h-0 w-full -translate-y-4 opacity-0 md:h-auto md:w-0 md:-translate-x-4 md:translate-y-0"
         }`}
       >
-        <SecondarySidebar activeMainItem={activeMainItem} />
+        <SecondarySidebar
+          activeMainItem={activeMainItem}
+          onMainItemChange={setActiveMainItem}
+        />
       </div>
       {children}
     </div>

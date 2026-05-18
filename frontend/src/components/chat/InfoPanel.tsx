@@ -2,6 +2,8 @@
 
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useSocketStore } from "@/lib/store/useSocketStore";
+import { useFriendsStore } from "@/lib/store/useFriendsStore";
+import { useChatStore } from "@/lib/store/useChatStore";
 import { Conversation, Participant } from "@/types/chat";
 import { X, Users, Calendar, Image as ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -27,6 +29,15 @@ type MediaItem = {
 export default function InfoPanel({ conversation, onClose }: InfoPanelProps) {
   const { user } = useAuthStore();
   const { onlineUsers } = useSocketStore();
+  const allFriends = useFriendsStore((state) => state.allFriends);
+  const createDirectConversation = useChatStore(
+    (state) => state.createDirectConversation
+  );
+  const setActiveConversation = useChatStore(
+    (state) => state.setActiveConversation
+  );
+  const conversations = useChatStore((state) => state.conversations);
+
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
 
@@ -42,6 +53,28 @@ export default function InfoPanel({ conversation, onClose }: InfoPanelProps) {
       url.startsWith("/"));
 
   const isOnline = (p: Participant) => onlineUsers.includes(p._id);
+
+  const isFriendWith = (participantId: string) =>
+    allFriends.some(
+      (f) => f.userA._id === participantId || f.userB._id === participantId
+    );
+
+  const findDirectConversation = (participantId: string) =>
+    conversations.find(
+      (c) =>
+        c.type === "direct" &&
+        c.participants.some((p) => p._id === participantId)
+    );
+
+  const handleMessageMember = async (participantId: string) => {
+    const existing = findDirectConversation(participantId);
+    if (existing) {
+      setActiveConversation(existing._id);
+    } else {
+      await createDirectConversation(participantId);
+    }
+    onClose();
+  };
 
   const createdAt = conversation.createdAt
     ? new Date(conversation.createdAt).toLocaleDateString("en-US", {
@@ -176,11 +209,12 @@ export default function InfoPanel({ conversation, onClose }: InfoPanelProps) {
                 const isMe = p._id === user?.id;
                 const online = isOnline(p);
                 const name = isMe ? `${p.displayName} (You)` : p.displayName;
+                const canMessage = !isMe && isFriendWith(p._id);
 
                 return (
                   <div
                     key={p._id}
-                    className="flex items-center gap-3 rounded border-2 border-black bg-white p-2 dark:border-dark-border-subtle dark:bg-dark-bg-card"
+                    className="group flex items-center gap-3 rounded border-2 border-black bg-white p-2 dark:border-dark-border-subtle dark:bg-dark-bg-card"
                   >
                     {isValidAvatar(p.avatarUrl) ? (
                       <Image
@@ -203,6 +237,19 @@ export default function InfoPanel({ conversation, onClose }: InfoPanelProps) {
                     <span
                       className={`h-2 w-2 flex-shrink-0 rounded-full ${online ? "bg-green-500" : "bg-gray-400"}`}
                     />
+
+                    {/* Message button — only for friends, hidden until hover */}
+                    {canMessage && (
+                      <button
+                        onClick={() => handleMessageMember(p._id)}
+                        className="hidden size-7 flex-shrink-0 items-center justify-center border-2 border-black bg-accent-yellow transition-all hover:shadow-[2px_2px_0px_0px_#1E1C11] group-hover:flex dark:border-dark-border-subtle dark:bg-dark-accent"
+                        title={`Message ${p.displayName}`}
+                      >
+                        <span className="material-symbols-outlined text-sm leading-none">
+                          chat
+                        </span>
+                      </button>
+                    )}
                   </div>
                 );
               })}

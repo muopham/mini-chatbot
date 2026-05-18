@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Check, XCircle, Loader2 } from "lucide-react";
+import { Check, XCircle, Loader2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { DEFAULT_AVATAR_URL } from "@/shared/constants/chat";
@@ -12,6 +12,7 @@ interface FriendRequestListProps {
   itemClassName?: string;
   onAccept: (requestId: string) => Promise<void>;
   onDecline: (requestId: string) => Promise<void>;
+  onStartChat?: (userId: string) => Promise<void> | void;
 }
 
 export default function FriendRequestList({
@@ -19,6 +20,7 @@ export default function FriendRequestList({
   itemClassName = "",
   onAccept,
   onDecline,
+  onStartChat,
 }: FriendRequestListProps) {
   const [actionId, setActionId] = useState<string | null>(null);
 
@@ -70,9 +72,22 @@ export default function FriendRequestList({
                   setActionId(req._id);
                   try {
                     await onAccept(req._id);
-                    toast.success(
-                      `You are now friends with ${from?.displayName}!`
-                    );
+                    if (onStartChat) {
+                      toast.success(
+                        `You are now friends with ${from?.displayName}!`,
+                        {
+                          action: {
+                            label: "Send message",
+                            onClick: () => onStartChat(from._id),
+                          },
+                          duration: 5000,
+                        }
+                      );
+                    } else {
+                      toast.success(
+                        `You are now friends with ${from?.displayName}!`
+                      );
+                    }
                   } catch {
                     toast.error("Failed to accept request.");
                   } finally {

@@ -5,18 +5,22 @@ import GroupList from "./GroupList";
 import UserProfileSwitcher from "./UserProfileSwitcher";
 import UserSearchDropdown from "./UserSearchDropdown";
 import { useFriendsStore } from "@/lib/store/useFriendsStore";
+import { useChatStore } from "@/lib/store/useChatStore";
 import { useState, useRef, useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { Loader2 } from "lucide-react";
 import FriendRequestList from "./FriendRequestList";
+import AllFriendsList from "./AllFriendsList";
 import type { SidebarMainItem } from "./PrimarySidebar";
 
 interface SecondarySidebarProps {
   activeMainItem: SidebarMainItem;
+  onMainItemChange: (item: SidebarMainItem) => void;
 }
 
 export default function SecondarySidebar({
   activeMainItem,
+  onMainItemChange,
 }: SecondarySidebarProps) {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -32,6 +36,9 @@ export default function SecondarySidebar({
     acceptRequest,
     declineRequest,
   } = useFriendsStore();
+  const createDirectConversation = useChatStore(
+    (state) => state.createDirectConversation
+  );
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -51,7 +58,11 @@ export default function SecondarySidebar({
     debouncedSearch(val);
   };
 
-  // Close dropdown on outside click
+  const handleStartChat = async (friendId: string) => {
+    await createDirectConversation(friendId);
+    onMainItemChange("chats");
+  };
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -62,19 +73,18 @@ export default function SecondarySidebar({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Fetch friend requests on mount
   useEffect(() => {
     fetchRequests();
     fetchSentRequests();
     fetchAllFriends();
   }, [fetchAllFriends, fetchRequests, fetchSentRequests]);
 
-  // Refresh requests when switching to contacts tab
   useEffect(() => {
     if (activeMainItem === "contacts") {
       fetchRequests({ force: true });
+      fetchAllFriends();
     }
-  }, [activeMainItem, fetchRequests]);
+  }, [activeMainItem, fetchRequests, fetchAllFriends]);
 
   const showChats = activeMainItem === "chats";
   const showGroups = activeMainItem === "groups";
@@ -82,13 +92,13 @@ export default function SecondarySidebar({
 
   return (
     <aside className="z-10 flex h-full w-full flex-col border-b-4 border-black bg-[#F4EEDB] dark:border-dark-border dark:bg-dark-bg-sidebar md:w-80 md:border-b-0 md:border-r-4">
-      <div className="border-b-4 border-black dark:border-dark-border p-4">
+      <div className="border-b-4 border-black p-4 dark:border-dark-border">
         {showChats && (
           <>
             <div className="relative" ref={searchRef}>
               <input
                 ref={inputRef}
-                className="w-full border-2 border-black dark:border-dark-border-subtle bg-surface-container-lowest dark:bg-dark-bg-input p-2 text-xs font-bold text-on-surface dark:text-dark-text-primary placeholder:text-stone-400 dark:placeholder:text-dark-text-tertiary focus:outline-none focus:ring-0 dark:focus:border-dark-accent"
+                className="w-full border-2 border-black bg-surface-container-lowest p-2 text-xs font-bold text-on-surface placeholder:text-stone-400 focus:outline-none focus:ring-0 dark:border-dark-border-subtle dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary dark:focus:border-dark-accent"
                 placeholder="Search chats or find users..."
                 type="text"
                 value={query}
@@ -124,29 +134,43 @@ export default function SecondarySidebar({
 
         {showContacts && (
           <h2 className="font-headline text-sm font-black uppercase tracking-widest text-stone-700 dark:text-dark-text-secondary">
-            Friend Requests
+            Contacts
           </h2>
         )}
       </div>
+
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
         {showChats && <ConversationList />}
 
         {showGroups && <GroupList />}
 
         {showContacts && (
-          <>
-            {!requestsInitialized || requestsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="animate-spin" size={24} />
-              </div>
-            ) : (
-              <FriendRequestList
-                friendRequests={friendRequests}
-                onAccept={acceptRequest}
-                onDecline={declineRequest}
-              />
-            )}
-          </>
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-3 font-headline text-[10px] font-black uppercase tracking-widest text-stone-500 dark:text-dark-text-secondary">
+                Pending Requests
+              </h3>
+              {!requestsInitialized || requestsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="animate-spin" size={24} />
+                </div>
+              ) : (
+                <FriendRequestList
+                  friendRequests={friendRequests}
+                  onAccept={acceptRequest}
+                  onDecline={declineRequest}
+                  onStartChat={handleStartChat}
+                />
+              )}
+            </div>
+
+            <div>
+              <h3 className="mb-3 font-headline text-[10px] font-black uppercase tracking-widest text-stone-500 dark:text-dark-text-secondary">
+                My Friends
+              </h3>
+              <AllFriendsList onStartChat={handleStartChat} />
+            </div>
+          </div>
         )}
       </div>
       <UserProfileSwitcher />
