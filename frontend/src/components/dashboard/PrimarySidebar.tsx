@@ -36,17 +36,10 @@ export default function PrimarySidebar({
     if (typeof window === "undefined") return;
     const root = document.documentElement;
     const saved = localStorage.getItem("theme");
-    if (saved === "dark" || saved === "light") {
-      const nextDark = saved === "dark";
-      root.classList.toggle("dark", nextDark);
-      setIsDark(nextDark);
-      return;
-    }
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.classList.toggle("dark", prefersDark);
-    setIsDark(prefersDark);
+    const nextDark = saved === "dark";
+    root.classList.toggle("dark", nextDark);
+    root.classList.toggle("light", !nextDark);
+    setIsDark(nextDark);
   }, []);
 
   // Fetch friend requests when the sidebar becomes visible
@@ -72,7 +65,7 @@ export default function PrimarySidebar({
 
   return (
     <>
-      <aside className="z-20 flex h-16 w-full flex-row items-center border-b-4 border-black bg-[#F4EEDB] dark:border-dark-border dark:bg-dark-bg-sidebar px-3 md:h-full md:w-16 md:flex-col md:border-b-0 md:border-r-4 md:px-0 md:py-4">
+      <aside className="z-20 flex h-16 w-full flex-row items-center border-b-4 border-black bg-[#F4EEDB] px-3 dark:border-dark-border dark:bg-dark-bg-sidebar md:h-full md:w-16 md:flex-col md:border-b-0 md:border-r-4 md:px-0 md:py-4">
         <div className="mr-3 md:mb-6 md:mr-0">
           <Logo size="sm" showText={false} variant="yellow" />
         </div>
@@ -83,10 +76,10 @@ export default function PrimarySidebar({
           title={isSecondaryOpen ? "Hide sidebar" : "Show sidebar"}
           aria-label={isSecondaryOpen ? "Hide sidebar" : "Show sidebar"}
           aria-pressed={isSecondaryOpen}
-          className={`mr-3 flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle text-stone-800 dark:text-dark-text-secondary transition-colors md:mb-6 md:mr-0 ${
+          className={`mr-3 flex size-11 items-center justify-center border-2 border-black text-stone-800 transition-colors dark:border-dark-border-subtle dark:text-dark-text-secondary md:mb-6 md:mr-0 ${
             isSecondaryOpen
               ? "editorial-shadow bg-accent-yellow"
-              : "bg-white dark:bg-dark-bg-card hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
+              : "bg-white hover:bg-accent-yellow/60 dark:bg-dark-bg-card dark:hover:bg-dark-accent/20"
           }`}
         >
           <span className="material-symbols-outlined text-xl">
@@ -106,10 +99,10 @@ export default function PrimarySidebar({
                   onClick={() => onMainItemChange(item.id)}
                   title={item.label}
                   aria-label={item.label}
-                  className={`flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle text-stone-800 dark:text-dark-text-secondary transition-colors ${
+                  className={`flex size-11 items-center justify-center border-2 border-black text-stone-800 transition-colors dark:border-dark-border-subtle dark:text-dark-text-secondary ${
                     isActive
                       ? "editorial-shadow bg-accent-yellow"
-                      : "bg-white dark:bg-dark-bg-card hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
+                      : "bg-white hover:bg-accent-yellow/60 dark:bg-dark-bg-card dark:hover:bg-dark-accent/20"
                   }`}
                 >
                   <span className="material-symbols-outlined text-xl">
@@ -132,7 +125,7 @@ export default function PrimarySidebar({
             onClick={handleThemeToggle}
             title="Theme"
             aria-label="Theme"
-            className="flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle bg-white dark:bg-dark-bg-card text-stone-800 dark:text-dark-text-secondary transition-colors hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
+            className="flex size-11 items-center justify-center border-2 border-black bg-white text-stone-800 transition-colors hover:bg-accent-yellow/60 dark:border-dark-border-subtle dark:bg-dark-bg-card dark:text-dark-text-secondary dark:hover:bg-dark-accent/20"
           >
             <span className="material-symbols-outlined text-xl">
               {isDark ? "dark_mode" : "light_mode"}
@@ -144,7 +137,7 @@ export default function PrimarySidebar({
             onClick={handleLogout}
             title="Logout"
             aria-label="Logout"
-            className="flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle bg-white dark:bg-dark-bg-card text-stone-800 dark:text-dark-text-secondary transition-colors hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
+            className="flex size-11 items-center justify-center border-2 border-black bg-white text-stone-800 transition-colors hover:bg-accent-yellow/60 dark:border-dark-border-subtle dark:bg-dark-bg-card dark:text-dark-text-secondary dark:hover:bg-dark-accent/20"
           >
             <span className="material-symbols-outlined text-xl">logout</span>
           </button>
