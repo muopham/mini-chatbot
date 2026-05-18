@@ -2,54 +2,46 @@ import { Conversation } from "@/types/chat";
 import Card from "./Card";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useChatStore } from "@/lib/store/useChatStore";
-import { cn } from "@/lib/utils";
+import { memo } from "react";
 
-export default function GroupCard({
- conversation,
-}: {
- conversation: Conversation;
-}) {
- const { user } = useAuthStore();
- const {
- activeConversationId,
- setActiveConversation,
- fetchMessages,
- } = useChatStore();
+function GroupCard({ conversation }: { conversation: Conversation }) {
+  const user = useAuthStore((state) => state.user);
+  const activeConversationId = useChatStore(
+    (state) => state.activeConversationId
+  );
+  const setActiveConversation = useChatStore(
+    (state) => state.setActiveConversation
+  );
 
- if (!user) return null;
+  if (!user) return null;
 
- const ortherUser = conversation.participants.find(
- (item) => item._id !== user.id
- );
+  const unreadCount = conversation.unreadCounts[user.id];
+  const name = conversation.group?.name ?? "";
 
- if (!ortherUser) return null;
+  const handleSelectionConversation = (id: string) => {
+    setActiveConversation(id);
+  };
 
- const unreadCount = conversation.unreadCounts[user.id];
- const name = conversation.group?.name ?? "";
-
- const handleSelectionConversation = async (id: string) => {
- setActiveConversation(id);
- await fetchMessages(id);
- };
-
- return (
- <Card
- isGroup
- convosationId={conversation._id}
- name={name}
- timestamp={
- conversation.lastMessage?.createdAt
- ? new Date(conversation.lastMessage?.createdAt)
- : undefined
- }
- isActive={activeConversationId === conversation._id}
- unreadCount={unreadCount}
- onSelect={handleSelectionConversation}
- subTitle={
- <p className="truncate text-xs">
- {conversation.participants.length} members
- </p>
- }
- />
-);
+  return (
+    <Card
+      isGroup
+      conversationId={conversation._id}
+      name={name}
+      timestamp={
+        conversation.lastMessage?.createdAt
+          ? new Date(conversation.lastMessage?.createdAt)
+          : undefined
+      }
+      isActive={activeConversationId === conversation._id}
+      unreadCount={unreadCount}
+      onSelect={handleSelectionConversation}
+      subTitle={
+        <p className="truncate text-xs">
+          {conversation.participants.length} members
+        </p>
+      }
+    />
+  );
 }
+
+export default memo(GroupCard);

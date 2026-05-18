@@ -31,6 +31,28 @@ const config: Config = {
         "error-container": "#ffdad6",
         "on-error-container": "#93000a",
         outline: "#7f775f",
+
+        // ── Amber Burn dark tokens ───────────────────────────────────────────
+        "dark-bg-page":    "#100e07",
+        "dark-bg-surface": "#1a1609",
+        "dark-bg-sidebar": "#22190a",
+        "dark-bg-card":    "#2a1f0c",
+        "dark-bg-input":   "#31260f",
+
+        "dark-accent":       "#f59e0b",
+        "dark-accent-deep":  "#d97706",
+        "dark-accent-on":    "#100e07",
+
+        "dark-border":        "#f59e0b",
+        "dark-border-subtle": "#3d300f",
+
+        "dark-text-primary":   "#fef3c7",
+        "dark-text-secondary": "#d4b483",
+        "dark-text-tertiary":  "#7a6535",
+
+        "dark-online":  "#34d399",
+        "dark-error":   "#f87171",
+        "dark-success": "#34d399",
       },
       fontFamily: {
         display: ["var(--font-public-sans)", "sans-serif"],
@@ -47,6 +69,12 @@ const config: Config = {
         "neo-sm": "4px 4px 0px 0px rgba(0,0,0,1)",
         editorial: "4px 4px 0px 0px #1E1C11",
         "editorial-lg": "8px 8px 0px 0px #1E1C11",
+        // Dark mode (Amber Burn)
+        amber: "4px 4px 0px 0px #f59e0b",
+        "amber-lg": "8px 8px 0px 0px #f59e0b",
+        "amber-sm": "3px 3px 0px 0px #f59e0b",
+        "amber-subtle": "3px 3px 0px 0px #3d300f",
+        "amber-send": "2px 2px 0px 0px #92400e",
       },
       borderRadius: {
         DEFAULT: "0px",

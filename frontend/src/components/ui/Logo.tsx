@@ -34,11 +34,11 @@ export default function Logo({
         className={cn(
           s.box,
           variantMap[variant],
-          "neo-border neo-shadow-sm flex flex-shrink-0 items-center justify-center"
+          "neo-border neo-shadow-sm flex flex-shrink-0 items-center justify-center dark:border-dark-border"
         )}
       >
         <svg
-          className={cn(s.icon, "text-black")}
+          className={cn(s.icon, "text-black dark:text-dark-accent-on")}
           fill="none"
           viewBox="0 0 48 48"
           xmlns="http://www.w3.org/2000/svg"

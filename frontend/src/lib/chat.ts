@@ -60,6 +60,19 @@ export const chat = {
       name,
       memberIds,
     });
+    return res.data.conversation ?? res.data;
+  },
+
+  async createDirectConversation(memberId: string) {
+    const res = await api.post("/conversations", {
+      type: "direct",
+      memberIds: [memberId],
+    });
+    return res.data.conversation ?? res.data;
+  },
+
+  async fetchSharedMedia(conversationId: string) {
+    const res = await api.get(`/conversations/${conversationId}/media`);
     return res.data;
   },
 };

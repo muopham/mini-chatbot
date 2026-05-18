@@ -62,8 +62,8 @@ export class FriendsService {
  );
  }
 const friendRequest = await this.friendRequestModel.create({
-      from,
-      to,
+      from: new mongoose.Types.ObjectId(from),
+      to: new mongoose.Types.ObjectId(to),
       message,
     });
     return friendRequest;
@@ -117,15 +117,21 @@ const friendRequest = await this.friendRequestModel.create({
           { userB: new mongoose.Types.ObjectId(userId) },
         ],
       })
+      .populate('userA', '_id username displayName avatarUrl')
+      .populate('userB', '_id username displayName avatarUrl')
       .exec();
     return friends;
   }
 
   async getFriendRequests(userId: string) {
+    const objUserId = new mongoose.Types.ObjectId(userId);
     const requests = await this.friendRequestModel
-      .find({ to: new mongoose.Types.ObjectId(userId) })
-      .populate('from')
+      .find({ to: objUserId })
+      .populate('from', '_id username displayName avatarUrl')
+      .sort({ createdAt: -1 })
+      .lean()
       .exec();
+
     return requests;
   }
 

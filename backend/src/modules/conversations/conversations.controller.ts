@@ -36,7 +36,17 @@ export class ConversationsController {
     @CurrentUser() user: { userId: string },
     @Body() dto: CreateConversationDto,
   ) {
-    return this.conversationsService.createConversation(dto, user.userId);
+    const conversation = await this.conversationsService.createConversation(
+      dto,
+      user.userId,
+    );
+    const formatted = this.conversationsService.formatConversation(conversation);
+
+    formatted.participants.forEach((participant) => {
+      this.chatGateway.emitToUser(participant._id.toString(), 'new-group', formatted);
+    });
+
+    return formatted;
   }
 
   @Get()
@@ -52,6 +62,14 @@ export class ConversationsController {
     @Query() query: GetMessagesDto,
   ) {
     return this.conversationsService.getMessages(conversationId, query);
+  }
+
+  @Get(':conversationId/media')
+  @HttpCode(HttpStatus.OK)
+  async getSharedMedia(
+    @Param('conversationId') conversationId: string,
+  ) {
+    return this.conversationsService.getSharedMedia(conversationId);
   }
 
   @Patch(':conversationId/seen')

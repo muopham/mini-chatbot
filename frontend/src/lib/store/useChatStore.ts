@@ -5,6 +5,37 @@ import { chat } from "../chat";
 import { useAuthStore } from "./useAuthStore";
 import { Conversation, Message } from "@/types/chat";
 
+const messageFetches = new Map<string, Promise<void>>();
+
+const createLocalMessage = ({
+  content,
+  conversationId,
+  imgUrl,
+  senderId,
+}: {
+  content: string;
+  conversationId: string;
+  imgUrl?: string;
+  senderId: string;
+}): Message => {
+  const localId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`;
+
+  return {
+    _id: `local-${localId}`,
+    localId,
+    conversationId,
+    senderId,
+    content,
+    imgUrl,
+    createdAt: new Date().toISOString(),
+    isOwn: true,
+    status: "sending",
+  };
+};
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -13,9 +44,24 @@ export const useChatStore = create<ChatState>()(
       activeConversationId: null,
       converLoading: false,
       messageLoading: false,
- typingUsers: {},
+      typingUsers: {},
+      drafts: {},
 
       setActiveConversation: (id) => set({ activeConversationId: id }),
+      setDraft: (conversationId, content) => {
+        set((state) => ({
+          drafts: {
+            ...state.drafts,
+            [conversationId]: content,
+          },
+        }));
+      },
+      clearDraft: (conversationId) => {
+        set((state) => {
+          const { [conversationId]: _removed, ...drafts } = state.drafts;
+          return { drafts };
+        });
+      },
       reset: () => {
         set({
           conversations: [],
@@ -23,6 +69,7 @@ export const useChatStore = create<ChatState>()(
           activeConversationId: null,
           converLoading: false,
           messageLoading: false,
+          drafts: {},
         });
       },
       fetchConversation: async () => {
@@ -43,6 +90,8 @@ export const useChatStore = create<ChatState>()(
         const converId = conversationsId ?? activeConversationId;
 
         if (!converId) return;
+        const pendingFetch = messageFetches.get(converId);
+        if (pendingFetch) return pendingFetch;
 
         const current = messages?.[converId];
         const nextCursor =
@@ -51,44 +100,91 @@ export const useChatStore = create<ChatState>()(
         if (nextCursor === null) return;
         set({ messageLoading: true });
 
-        try {
-          const { messages: fetched, cursor } = await chat.fetchMessages(
-            converId,
-            nextCursor
-          );
-          const processed = fetched.map((m: Message) => ({
-            ...m,
-            isOwn: m.senderId === user?.id,
-          }));
-          set((state) => {
-            const prev = state.messages[converId]?.items ?? [];
-            const merged =
-              prev.length > 0 ? [...processed, ...prev] : processed;
+        const fetchPromise = (async () => {
+          try {
+            const { messages: fetched, cursor } = await chat.fetchMessages(
+              converId,
+              nextCursor
+            );
+            const processed = fetched.map((m: Message) => ({
+              ...m,
+              isOwn: m.senderId === user?.id,
+            }));
+            set((state) => {
+              const prev = state.messages[converId]?.items ?? [];
+              const merged =
+                prev.length > 0 ? [...processed, ...prev] : processed;
 
-            return {
-              messages: {
-                ...state.messages,
-                [converId]: {
-                  items: merged,
-                  hasMore: !!cursor,
-                  nextCursor: cursor ?? null,
- didFetch: true,
+              return {
+                messages: {
+                  ...state.messages,
+                  [converId]: {
+                    items: merged,
+                    hasMore: !!cursor,
+                    nextCursor: cursor ?? null,
+                    didFetch: true,
+                  },
                 },
-              },
-            };
-          });
+              };
+            });
+          } catch (error) {
+            console.log(error);
+          } finally {
+            messageFetches.delete(converId);
+            set({ messageLoading: false });
+          }
+        })();
+
+        messageFetches.set(converId, fetchPromise);
+        return fetchPromise;
+      },
+
+      createDirectConversation: async (memberId) => {
+        try {
+          const conversation = await chat.createDirectConversation(memberId);
+          get().updateConversation(conversation);
+          set({ activeConversationId: conversation._id });
+          return conversation;
         } catch (error) {
           console.log(error);
-        } finally {
-          set({ messageLoading: false });
+          return null;
         }
       },
 
       sendDirectMessage: async (recipientId, content, imgUrl) => {
-        try {
-          const { activeConversationId } = get();
-          const { user } = useAuthStore.getState();
+        const { activeConversationId } = get();
+        const { user } = useAuthStore.getState();
+        if (!activeConversationId || !user) return;
 
+        const localMessage = createLocalMessage({
+          content,
+          conversationId: activeConversationId,
+          imgUrl,
+          senderId: user.id,
+        });
+
+        set((state) => {
+          const current = state.messages[activeConversationId] ?? {
+            items: [],
+            hasMore: false,
+            nextCursor: undefined,
+            didFetch: true,
+          };
+          return {
+            messages: {
+              ...state.messages,
+              [activeConversationId]: {
+                ...current,
+                items: [...current.items, localMessage],
+              },
+            },
+            conversations: state.conversations.map((c) =>
+              c._id === activeConversationId ? { ...c, seenBy: [] } : c
+            ),
+          };
+        });
+
+        try {
           const message = await chat.sendDirectMessage(
             recipientId,
             content,
@@ -96,27 +192,43 @@ export const useChatStore = create<ChatState>()(
             activeConversationId || undefined
           );
 
-          // Add message to store immediately — don't wait for socket
-          if (message && activeConversationId) {
+          if (message) {
             set((state) => {
               const current = state.messages[activeConversationId];
               if (!current) return state;
-              if (current.items.some((m) => m._id === message._id)) return state;
               return {
                 messages: {
                   ...state.messages,
                   [activeConversationId]: {
                     ...current,
-                    items: [...current.items, { ...message, isOwn: true }],
+                    items: current.items.map((item) =>
+                      item._id === localMessage._id
+                        ? { ...message, isOwn: true, status: "sent" }
+                        : item
+                    ),
                   },
                 },
-                conversations: state.conversations.map((c) =>
-                  c._id === activeConversationId ? { ...c, seenBy: [] } : c
-                ),
               };
             });
           }
         } catch (error) {
+          set((state) => {
+            const current = state.messages[activeConversationId];
+            if (!current) return state;
+            return {
+              messages: {
+                ...state.messages,
+                [activeConversationId]: {
+                  ...current,
+                  items: current.items.map((item) =>
+                    item._id === localMessage._id
+                      ? { ...item, status: "failed" }
+                      : item
+                  ),
+                },
+              },
+            };
+          });
           console.error(
             "An error occurred while sending a direct message",
             error
@@ -125,34 +237,130 @@ export const useChatStore = create<ChatState>()(
       },
 
       sendGroupMessage: async (conversationId, content, imgUrl) => {
+        const { user } = useAuthStore.getState();
+        if (!user) return;
+
+        const localMessage = createLocalMessage({
+          content,
+          conversationId,
+          imgUrl,
+          senderId: user.id,
+        });
+
+        set((state) => {
+          const current = state.messages[conversationId] ?? {
+            items: [],
+            hasMore: false,
+            nextCursor: undefined,
+            didFetch: true,
+          };
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...current,
+                items: [...current.items, localMessage],
+              },
+            },
+            conversations: state.conversations.map((c) =>
+              c._id === conversationId ? { ...c, seenBy: [] } : c
+            ),
+          };
+        });
+
         try {
-          const message = await chat.sendGroupMessage(conversationId, content, imgUrl);
+          const message = await chat.sendGroupMessage(
+            conversationId,
+            content,
+            imgUrl
+          );
 
           if (message) {
             set((state) => {
               const current = state.messages[conversationId];
               if (!current) return state;
-              if (current.items.some((m) => m._id === message._id)) return state;
               return {
                 messages: {
                   ...state.messages,
                   [conversationId]: {
                     ...current,
-                    items: [...current.items, { ...message, isOwn: true }],
+                    items: current.items.map((item) =>
+                      item._id === localMessage._id
+                        ? { ...message, isOwn: true, status: "sent" }
+                        : item
+                    ),
                   },
                 },
-                conversations: state.conversations.map((c) =>
-                  c._id === conversationId ? { ...c, seenBy: [] } : c
-                ),
               };
             });
           }
         } catch (error) {
+          set((state) => {
+            const current = state.messages[conversationId];
+            if (!current) return state;
+            return {
+              messages: {
+                ...state.messages,
+                [conversationId]: {
+                  ...current,
+                  items: current.items.map((item) =>
+                    item._id === localMessage._id
+                      ? { ...item, status: "failed" }
+                      : item
+                  ),
+                },
+              },
+            };
+          });
           console.error(
             "An error occurred while sending a group message",
             error
           );
         }
+      },
+
+      retryMessage: async (conversationId, messageId) => {
+        const conversation = get().conversations.find(
+          (item) => item._id === conversationId
+        );
+        const failedMessage = get().messages[conversationId]?.items.find(
+          (item) => item._id === messageId && item.status === "failed"
+        );
+        const { user } = useAuthStore.getState();
+        if (!conversation || !failedMessage || !user) return;
+
+        set((state) => {
+          const current = state.messages[conversationId];
+          if (!current) return state;
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...current,
+                items: current.items.filter((item) => item._id !== messageId),
+              },
+            },
+          };
+        });
+
+        if (conversation.type === "direct") {
+          const recipient = conversation.participants.find(
+            (participant) => participant._id !== user.id
+          );
+          if (!recipient) return;
+          await get().sendDirectMessage(
+            recipient._id,
+            failedMessage.content ?? "",
+            failedMessage.imgUrl ?? undefined
+          );
+          return;
+        }
+
+        await get().sendGroupMessage(
+          conversationId,
+          failedMessage.content ?? "",
+          failedMessage.imgUrl ?? undefined
+        );
       },
 
       addMessage: async (message) => {
@@ -161,13 +369,11 @@ export const useChatStore = create<ChatState>()(
           message.isOwn = message.senderId === user?.id;
           const conversationId = message.conversationId;
 
-          // If no cache at all, fetch first
           const existing = get().messages[conversationId];
           if (!existing?.didFetch && !existing?.items?.length) {
             await get().fetchMessages(conversationId);
           }
 
-          // Use set(state => ...) to always read current state — avoids stale closure
           set((state) => {
             const currentItems = state.messages[conversationId]?.items ?? [];
             if (currentItems.some((m) => m._id === message._id)) return state;
@@ -179,7 +385,8 @@ export const useChatStore = create<ChatState>()(
                   ...state.messages[conversationId],
                   items: [...currentItems, message],
                   hasMore: state.messages[conversationId]?.hasMore ?? false,
-                  nextCursor: state.messages[conversationId]?.nextCursor ?? undefined,
+                  nextCursor:
+                    state.messages[conversationId]?.nextCursor ?? undefined,
                   didFetch: true,
                 },
               },
@@ -191,39 +398,66 @@ export const useChatStore = create<ChatState>()(
       },
 
       updateConversation: (conversation) => {
-        set((state) => ({
-          conversations: state.conversations.map((c) =>
-            c._id === conversation._id ? { ...c, ...conversation } : c
-          ),
-        }));
+        set((state) => {
+          const existing = state.conversations.some(
+            (c) => c._id === conversation._id
+          );
+          const conversations = existing
+            ? state.conversations.map((c) =>
+                c._id === conversation._id ? { ...c, ...conversation } : c
+              )
+            : conversation.type && conversation.participants
+              ? [conversation as Conversation, ...state.conversations]
+              : state.conversations;
+
+          return {
+            conversations: conversations.slice().sort((a, b) => {
+              const aTime = new Date(
+                a.lastMessageAt ?? a.updatedAt ?? a.createdAt
+              ).getTime();
+              const bTime = new Date(
+                b.lastMessageAt ?? b.updatedAt ?? b.createdAt
+              ).getTime();
+              return bTime - aTime;
+            }),
+          };
+        });
       },
 
       setTyping: (conversationId: string, userId: string, username: string) => {
- set((state) => {
- const prev = state.typingUsers[conversationId] ?? [];
- const filtered = prev.filter((u) => u.userId !== userId);
- return {
- typingUsers: {
- ...state.typingUsers,
- [conversationId]: [...filtered, { userId, username }],
- },
- };
- });
- },
+        set((state) => {
+          const prev = state.typingUsers[conversationId] ?? [];
+          const filtered = prev.filter((u) => u.userId !== userId);
+          return {
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: [...filtered, { userId, username }],
+            },
+          };
+        });
+      },
 
- clearTyping: (conversationId: string, userId: string) => {
- set((state) => {
- const prev = state.typingUsers[conversationId] ?? [];
- return {
- typingUsers: {
- ...state.typingUsers,
- [conversationId]: prev.filter((u) => u.userId !== userId),
- },
- };
- });
- },
+      clearTyping: (conversationId: string, userId: string) => {
+        set((state) => {
+          const prev = state.typingUsers[conversationId] ?? [];
+          return {
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: prev.filter((u) => u.userId !== userId),
+            },
+          };
+        });
+      },
 
- markAsSeen: async () => {
+      clearTypingForConversation: (conversationId: string) => {
+        set((state) => {
+          const { [conversationId]: _removed, ...typingUsers } =
+            state.typingUsers;
+          return { typingUsers };
+        });
+      },
+
+      markAsSeen: async () => {
         try {
           const { user } = useAuthStore.getState();
           const { activeConversationId, conversations } = get();
@@ -259,9 +493,8 @@ export const useChatStore = create<ChatState>()(
     {
       name: "chat-storage",
       partialize: (state) => ({
-        // Only persist activeConversationId to remember selected chat
         activeConversationId: state.activeConversationId,
-        // Do NOT persist conversations or messages — always fetch fresh
+        drafts: state.drafts,
       }),
     }
   )

@@ -4,6 +4,8 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl?: string;
+  bio?: string;
+  phone?: string;
 }
 
 export interface Friend {

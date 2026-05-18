@@ -121,7 +121,31 @@ export class ConversationsService {
  }
  // Trả về newest-first để frontend merge prepend đúng thứ tự
  messages.reverse();
- return { messages, nextCursor };
+  return { messages, nextCursor };
+   }
+
+  async getSharedMedia(conversationId: string) {
+    const messages = await this.messageModel
+      .find({
+        conversationId: new Types.ObjectId(conversationId),
+        imgUrl: { $nin: [null, ''] },
+      })
+      .sort({ createdAt: -1 })
+      .populate('senderId', 'displayName avatarUrl')
+      .lean();
+
+    const media = messages.map((m: any) => ({
+      _id: m._id,
+      imgUrl: m.imgUrl,
+      createdAt: m.createdAt,
+      sender: {
+        _id: m.senderId?._id,
+        displayName: m.senderId?.displayName,
+        avatarUrl: m.senderId?.avatarUrl,
+      },
+    }));
+
+    return { media, count: media.length };
   }
 
   async markAsSeen(conversationId: string, userId: string) {
@@ -190,7 +214,7 @@ export class ConversationsService {
     await conversation.save();
   }
 
-  private formatConversation(conversation: ConversationDocument) {
+  formatConversation(conversation: ConversationDocument) {
     const participants = (conversation.participants || []).map((p: any) => ({
       _id: p.userId?._id,
       displayName: p.userId?.displayName,

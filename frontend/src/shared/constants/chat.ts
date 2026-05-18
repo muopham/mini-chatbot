@@ -1,0 +1,5 @@
+export const CHAT_SCROLL_CONTAINER_ID = "chat-window-scroll-container";
+export const TYPING_TIMEOUT_MS = 2000;
+
+export const DEFAULT_AVATAR_URL =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCxXONw2_tjpuK327eKsgDQmA5N2_J8ul-ToKV5P-G1sAgzetDAmFdio7S2IhEHzVOEb4cFsGGu3qG3DLOn6jmuKWeDp21eJW1ZaXv5xu0AMDQEzWPU8bnxryGjDnI4szxWxm1FxuNaQ32UXBwjx_jbuSRUHqXDAAeRhqdfw7CkZeEN2A-dwVNVk07dQBOEuYUKaDhQV7mEJ6IqIicF3pKuRl9yJISkLgDLqNYiX_WeVsFvEPmnddHSpjTUG5BGk1r0r1f2tjvuJX58";

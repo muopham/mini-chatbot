@@ -2,7 +2,7 @@ import { cn, formatOnlineTime } from "@/lib/utils";
 import Image from "next/image";
 
 interface FriendCardProps {
-  convosationId: string;
+  conversationId: string;
   avatar?: string;
   name: string;
   timestamp?: Date;
@@ -10,12 +10,12 @@ interface FriendCardProps {
   onSelect: (id: string) => void;
   isGroup?: boolean;
   isActive: boolean;
-  subTitle: React.ReactNode; // sl thành viên or tin nhắn cuối
+  subTitle: React.ReactNode;
   statusType?: "online" | "offline";
 }
 
 export default function Card({
-  convosationId,
+  conversationId,
   avatar,
   name,
   unreadCount = 0,
@@ -36,16 +36,16 @@ export default function Card({
 
   return (
     <div
-      key={convosationId}
-      onClick={() => onSelect(convosationId)}
+      key={conversationId}
+      onClick={() => onSelect(conversationId)}
       className={cn(
-        "flex cursor-pointer items-center gap-3 border-2 border-transparent bg-white p-3 transition-all",
-        isActive && "border-black bg-accent-yellow"
+        "flex cursor-pointer items-center gap-3 border-2 border-transparent bg-white dark:bg-dark-bg-card p-3 transition-all",
+        isActive && "border-black dark:border-dark-accent bg-accent-yellow dark:bg-dark-accent/20"
       )}
     >
       <div className="relative">
         {isGroup ? (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black dark:bg-dark-accent text-sm font-bold text-white dark:text-dark-accent-on">
             {initial}
           </div>
         ) : isValidImage ? (
@@ -57,7 +57,7 @@ export default function Card({
             className="h-10 w-10 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black dark:bg-dark-accent text-sm font-bold text-white dark:text-dark-accent-on">
             {initial}
           </div>
         )}
@@ -80,7 +80,7 @@ export default function Card({
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "truncate text-sm",
+            "truncate text-sm dark:text-dark-text-primary",
             unreadCount && unreadCount > 0 ? "font-bold" : "font-medium"
           )}
         >
@@ -98,7 +98,7 @@ export default function Card({
         <span
           className={cn(
             "text-xs",
-            unreadCount > 0 ? "font-bold text-black" : "text-gray-400"
+            unreadCount > 0 ? "font-bold text-black dark:text-dark-text-primary" : "text-gray-400 dark:text-dark-text-tertiary"
           )}
         >
           {formatOnlineTime(timestamp)}

@@ -78,6 +78,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
  const conversationIds = await this.getConversationIds(userId);
  conversationIds.forEach((id) => socket.join(id));
+ socket.join(userId);
 
  console.log('Client connected:', socket.id);
  } catch (error) {
@@ -139,6 +140,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
  // Emit to a room (conversationId)
  emitToConversation(conversationId: string, event: string, payload: any) {
  this.server.to(conversationId).emit(event, payload);
+ }
+
+ emitToUser(userId: string, event: string, payload: any) {
+ this.server.to(userId).emit(event, payload);
+ }
+
+ @SubscribeMessage('join-conversation')
+ handleJoinConversation(
+ @MessageBody() conversationId: string,
+ @ConnectedSocket() client: Socket,
+ ) {
+ if (conversationId) {
+ client.join(conversationId);
+ }
  }
 
  // Get conversationIds to auto-join rooms on connect

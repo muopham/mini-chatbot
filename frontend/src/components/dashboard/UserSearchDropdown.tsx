@@ -1,12 +1,12 @@
 "use client";
 
-import { avatarUrl } from "@/lib/data";
+import { DEFAULT_AVATAR_URL } from "@/shared/constants/chat";
 import { useFriendsStore } from "@/lib/store/useFriendsStore";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import Image from "next/image";
-import { UserPlus, Loader2, UserCheck } from "lucide-react";
+import { UserPlus, Loader2, UserCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface UserSearchDropdownProps {
   query: string;
@@ -28,6 +28,10 @@ export default function UserSearchDropdown({
   const { user } = useAuthStore();
   const [sendingId, setSendingId] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetchSentRequests();
+  }, [fetchSentRequests]);
+
   const filtered = searchResults.filter((u) => u._id !== user?.id);
 
   const isPending = (userId: string) => sentRequests.includes(userId);
@@ -38,13 +42,20 @@ export default function UserSearchDropdown({
     setSendingId(userId);
     try {
       await sendRequest(userId);
-      // Optimistically add to sentRequests
-      useFriendsStore.setState((s) => ({
-        sentRequests: [...s.sentRequests, userId],
-      }));
       toast.success(`Friend request sent to ${displayName}!`);
-    } catch {
-      toast.error("Failed to send friend request.");
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? ((err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message as string | undefined)
+          : undefined;
+      if (msg?.toLowerCase().includes("already friend")) {
+        toast.info(`You are already friends with ${displayName}`);
+      } else if (msg?.toLowerCase().includes("already sent")) {
+        toast.info(`Request already sent to ${displayName}`);
+      } else {
+        toast.error(msg ?? "Failed to send friend request.");
+      }
     } finally {
       setSendingId(null);
     }
@@ -66,7 +77,6 @@ export default function UserSearchDropdown({
           {filtered.map((u) => {
             const pending = isPending(u._id);
             const friend = isFriend(u._id);
-            const isActionable = !pending && !friend;
 
             return (
               <li
@@ -74,7 +84,7 @@ export default function UserSearchDropdown({
                 className="flex items-center gap-3 border-b border-black/10 p-3 last:border-0 hover:bg-surface-container-lowest"
               >
                 <Image
-                  src={u.avatarUrl || avatarUrl}
+                  src={u.avatarUrl || DEFAULT_AVATAR_URL}
                   alt={u.displayName}
                   width={36}
                   height={36}
@@ -97,10 +107,10 @@ export default function UserSearchDropdown({
                   </span>
                 ) : pending ? (
                   <span
-                    className="flex size-8 flex-shrink-0 items-center justify-center border-2 border-black bg-stone-200 text-stone-400"
-                    title="Request pending"
+                    className="flex size-8 flex-shrink-0 items-center justify-center border-2 border-black bg-amber-100 text-amber-600"
+                    title="Request already sent"
                   >
-                    <Loader2 size={12} className="animate-spin" />
+                    <Clock size={12} />
                   </span>
                 ) : (
                   <button

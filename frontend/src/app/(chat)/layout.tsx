@@ -5,7 +5,9 @@ import type { SidebarMainItem } from "@/components/dashboard/PrimarySidebar";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useChatStore } from "@/lib/store/useChatStore";
 import Loading from "@/components/layout/Loading";
+import { SocketInitializer } from "@/providers/SocketInitializer";
 export default function DashboardLayout({
   children,
 }: {
@@ -15,7 +17,8 @@ export default function DashboardLayout({
   const { accessToken, refresh, fetchMe, user, loading } = useAuthStore();
   const [starting, setStarting] = useState(true);
   const [isSecondaryOpen, setIsSecondaryOpen] = useState(true);
-  const [activeMainItem, setActiveMainItem] = useState<SidebarMainItem>("chats");
+  const [activeMainItem, setActiveMainItem] =
+    useState<SidebarMainItem>("chats");
   useEffect(() => {
     const init = async () => {
       try {
@@ -24,14 +27,14 @@ export default function DashboardLayout({
         }
 
         const currentToken = useAuthStore.getState().accessToken;
-        if (currentToken && !user) {
+        const currentUser = useAuthStore.getState().user;
+        if (currentToken && !currentUser) {
           await fetchMe();
         }
 
-        // const currentUser = useAuthStore.getState().user;
-        // if (currentUser) {
-        //   await fetchConversations();
-        // }
+        if (currentToken) {
+          await useChatStore.getState().fetchConversation();
+        }
       } catch {
       } finally {
         setStarting(false);
@@ -39,7 +42,7 @@ export default function DashboardLayout({
     };
 
     init();
-  }, []);
+  }, [accessToken, fetchMe, refresh, user]);
 
   useEffect(() => {
     if (!starting && !useAuthStore.getState().accessToken) {
@@ -56,7 +59,8 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="bg-background flex h-screen overflow-hidden font-body text-on-surface">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background font-body text-on-surface md:flex-row">
+      <SocketInitializer />
       <PrimarySidebar
         isSecondaryOpen={isSecondaryOpen}
         onToggleSecondary={() => setIsSecondaryOpen((prev) => !prev)}
@@ -66,8 +70,8 @@ export default function DashboardLayout({
       <div
         className={`flex-shrink-0 overflow-hidden transition-all duration-700 ease-in-out ${
           isSecondaryOpen
-            ? "w-80 translate-x-0 opacity-100"
-            : "w-0 -translate-x-4 opacity-0"
+            ? "h-72 w-full translate-y-0 opacity-100 md:h-auto md:w-80 md:translate-x-0"
+            : "h-0 w-full -translate-y-4 opacity-0 md:h-auto md:w-0 md:-translate-x-4 md:translate-y-0"
         }`}
       >
         <SecondarySidebar activeMainItem={activeMainItem} />

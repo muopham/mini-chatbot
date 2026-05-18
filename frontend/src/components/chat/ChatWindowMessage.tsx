@@ -1,322 +1,329 @@
 "use client";
 
 import { useChatStore } from "@/lib/store/useChatStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { formatMessageTime } from "@/lib/utils";
 import { Conversation, Message, Participant } from "@/types/chat";
 import Image from "next/image";
 import EmptyChatState from "../dashboard/EmptyChatState";
 import EmptyStateMain from "../dashboard/EmptyStateMain";
-import {
- useEffect,
- useLayoutEffect,
- useRef,
- useState,
- useCallback,
-} from "react";
-import { CircleCheck } from "lucide-react";
+import { useEffect, useRef, useState, memo } from "react";
+import { CircleCheck, RotateCcw } from "lucide-react";
+import { useMessagePagination } from "@/hooks/useMessagePagination";
+import { useMessageScroll } from "@/hooks/useMessageScroll";
+import { CHAT_SCROLL_CONTAINER_ID } from "@/shared/constants/chat";
 
-const CHAT_SCROLL_CONTAINER_ID = "chat-window-scroll-container";
+export default function ChatWindowMessage({
+  searchQuery = "",
+}: {
+  searchQuery?: string;
+}) {
+  const {
+    conversations,
+    activeConversationId,
+    messages: allMessages,
+    messageLoading,
+    fetchMessages,
+    retryMessage,
+  } = useChatStore();
+  const [lastMessageStatus, setLastMessageStatus] = useState<
+    "delivered" | "seen"
+  >("delivered");
+  const messages = allMessages[activeConversationId!]?.items ?? [];
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const visibleMessages = normalizedSearchQuery
+    ? messages.filter((message) =>
+        message.content?.toLowerCase().includes(normalizedSearchQuery)
+      )
+    : messages;
+  const currentUserId = useAuthStore((state) => state.user?.id);
+  const hasMore = allMessages[activeConversationId!]?.hasMore ?? false;
+  const lastMessageId = messages[messages.length - 1]?._id ?? null;
+  const selectedConversation = conversations.find(
+    (i) => i._id === activeConversationId
+  );
+  const unreadAnchorRef = useRef<{
+    conversationId: string | null;
+    unreadCount: number;
+  }>({ conversationId: null, unreadCount: 0 });
+  // Guard: only show messages after we've explicitly fetched for this conversation.
+  // Prevents stale messages from a previous conversation from briefly flashing.
+  const didFetchForActive =
+    allMessages[activeConversationId!]?.didFetch ?? false;
 
-export default function ChatWindowMessage() {
- const {
-  conversations,
-  activeConversationId,
-  messages: allMessages,
-  messageLoading,
-  fetchMessages,
- } = useChatStore();
- const [lastMessageStatus, setLastMessageStatus] = useState<
-  "delivered" | "seen"
- >("delivered");
- const messages = allMessages[activeConversationId!]?.items ?? [];
- const hasMore = allMessages[activeConversationId!]?.hasMore ?? false;
- const lastMessageId = messages[messages.length - 1]?._id ?? null;
- const messageEndRef = useRef<HTMLDivElement>(null);
- const selectConvesation = conversations.find(
-  (i) => i._id === activeConversationId
- );
- const prevLastMessageIdRef = useRef<string | null>(null);
- const prevActiveIdRef = useRef<string | null>(null);
- const prependAnchorRef = useRef<{ prevHeight: number; prevTop: number } | null>(
-  null
- );
- // Use ref instead of state to avoid stale closure — does not trigger re-renders
- const isFetchingRef = useRef(false);
- // Guard: only show messages after we've explicitly fetched for this conversation.
- // Prevents stale messages from a previous conversation from briefly flashing.
- const didFetchForActive = allMessages[activeConversationId!]?.didFetch ?? false;
-
- const getScrollContainer = useCallback(() => {
-  return document.getElementById(CHAT_SCROLL_CONTAINER_ID);
- }, []);
-
- useEffect(() => {
-  const lastMessage = selectConvesation?.lastMessage;
-  if (!lastMessage) return;
-  const seenBy = selectConvesation?.seenBy ?? [];
-  setLastMessageStatus(seenBy.length > 0 ? "seen" : "delivered");
- }, [selectConvesation]);
-
- // Initial load when switching to a conversation that has no cached messages
- useEffect(() => {
-  if (!activeConversationId) return;
-  const existing = allMessages[activeConversationId];
-  if (!existing?.items?.length) {
-   fetchMessages(activeConversationId);
+  if (activeConversationId !== unreadAnchorRef.current.conversationId) {
+    unreadAnchorRef.current = {
+      conversationId: activeConversationId,
+      unreadCount:
+        currentUserId && selectedConversation?.unreadCounts
+          ? (selectedConversation.unreadCounts[currentUserId] ?? 0)
+          : 0,
+    };
   }
- }, [activeConversationId, allMessages, fetchMessages]);
 
- // When switching conversations, scroll to bottom ONCE.
- // We set prevActiveIdRef so the auto-scroll effect below doesn't fire
- // prematurely while the new batch of messages is loading.
- useLayoutEffect(() => {
-  if (activeConversationId && activeConversationId !== prevActiveIdRef.current) {
-   prevActiveIdRef.current = activeConversationId;
-   prevLastMessageIdRef.current = null;
-   if (messageEndRef.current) {
-    messageEndRef.current.scrollIntoView({ block: "end" });
-   }
-  }
- });
+  const firstUnreadIndex =
+    !normalizedSearchQuery && unreadAnchorRef.current.unreadCount > 0
+      ? Math.max(messages.length - unreadAnchorRef.current.unreadCount, 0)
+      : -1;
 
- // Auto-scroll only when a new message is appended at the bottom.
- // Do not force-scroll when older messages are prepended during pagination.
- useEffect(() => {
-  if (!lastMessageId) return;
-  // Only scroll if prevLastMessageIdRef is already set (not a fresh switch)
-  if (prevLastMessageIdRef.current === null) return;
+  const { getScrollContainer, messageEndRef, prependAnchorRef } =
+    useMessageScroll({
+      activeConversationId,
+      lastMessageId,
+      messagesLength: messages.length,
+      scrollContainerId: CHAT_SCROLL_CONTAINER_ID,
+    });
 
-  const isNewBottomMessage = prevLastMessageIdRef.current !== lastMessageId;
-
-  if (isNewBottomMessage) {
-   if (!messageEndRef.current) return;
-   messageEndRef.current.scrollIntoView({
-    block: "end",
-    behavior: "smooth",
-   });
-  }
-  prevLastMessageIdRef.current = lastMessageId;
- }, [lastMessageId]);
-
- const handleLoadMore = useCallback(() => {
-  if (!activeConversationId || !hasMore) return;
-  if (isFetchingRef.current) return;
-
-  const container = getScrollContainer();
-  if (container) {
-   prependAnchorRef.current = {
-    prevHeight: container.scrollHeight,
-    prevTop: container.scrollTop,
-   };
-  }
-  isFetchingRef.current = true;
-  // fetchMessages returns a Promise — reset ref when done
-  (fetchMessages(activeConversationId) as unknown as Promise<void>).finally(() => {
-   isFetchingRef.current = false;
+  useMessagePagination({
+    activeConversationId,
+    fetchMessages,
+    getScrollContainer,
+    hasMore,
+    prependAnchorRef,
   });
- }, [
-  activeConversationId,
-  fetchMessages,
-  getScrollContainer,
-  hasMore,
- ]);
 
- useEffect(() => {
-  const container = getScrollContainer();
-  if (!container) return;
+  useEffect(() => {
+    const lastMessage = selectedConversation?.lastMessage;
+    if (!lastMessage) return;
+    const seenBy = selectedConversation?.seenBy ?? [];
+    const seenByOthers = seenBy.filter((u) => u._id !== currentUserId);
+    setLastMessageStatus(seenByOthers.length > 0 ? "seen" : "delivered");
+  }, [selectedConversation, currentUserId]);
 
-  const onScroll = () => {
-   // Lower threshold (20px) and check ref instead of state
-   if (container.scrollTop <= 20 && !isFetchingRef.current) {
-    handleLoadMore();
-   }
+  // Initial load when switching to a conversation that has no cached messages
+  useEffect(() => {
+    if (!activeConversationId) return;
+    const existing = allMessages[activeConversationId];
+    if (!existing?.items?.length) {
+      fetchMessages(activeConversationId);
+    }
+  }, [activeConversationId, allMessages, fetchMessages]);
+
+  const sendHello = async () => {
+    if (!selectedConversation || !currentUserId) return;
+    if (selectedConversation.type === "direct") {
+      const other = selectedConversation.participants.find(
+        (p) => p._id !== currentUserId
+      );
+      if (other) {
+        await useChatStore.getState().sendDirectMessage(other._id, "Hello!");
+      }
+    } else {
+      await useChatStore.getState().sendGroupMessage(
+        selectedConversation._id,
+        "Hello!"
+      );
+    }
   };
 
-  container.addEventListener("scroll", onScroll);
-  return () => container.removeEventListener("scroll", onScroll);
- }, [getScrollContainer, handleLoadMore, activeConversationId]);
+  if (!selectedConversation) return <EmptyStateMain />;
+  if (!didFetchForActive) return null;
+  if (!messages?.length) return <EmptyChatState onSendHello={sendHello} />;
+  if (!visibleMessages.length) return <EmptyChatState onSendHello={sendHello} />;
 
- // Restore scroll position after prepending old messages using rAF
- useLayoutEffect(() => {
-  const anchor = prependAnchorRef.current;
-  if (!anchor) return;
-  const container = getScrollContainer();
-  if (!container) return;
+  return (
+    <div className="flex flex-col gap-1 p-4">
+      {messageLoading && hasMore && (
+        <p className="py-2 text-center text-xs font-bold text-stone-400">
+          Loading...
+        </p>
+      )}
+      {visibleMessages.map((item, index) => (
+        <div key={item._id ?? index}>
+          {index === firstUnreadIndex && <UnreadSeparator />}
+          <MessageItem
+            message={item}
+            index={index}
+            messages={visibleMessages}
+            selectedConvo={selectedConversation}
+            lastMessageStatus={lastMessageStatus}
+            onRetry={retryMessage}
+          />
+        </div>
+      ))}
+      <div ref={messageEndRef}></div>
+    </div>
+  );
+}
 
-  // requestAnimationFrame ensures DOM has painted and scrollHeight is stable
-  requestAnimationFrame(() => {
-   const newScrollTop = container.scrollHeight - anchor.prevHeight + anchor.prevTop;
-   container.scrollTop = newScrollTop;
-  });
-
-  prependAnchorRef.current = null;
- }, [messages.length, getScrollContainer]);
-
- if (!selectConvesation) return <EmptyStateMain />;
- if (!didFetchForActive || messageLoading) return <EmptyChatState />;
- if (!messages?.length) return <EmptyChatState />;
-
- return (
-  <div className="flex flex-col gap-1 p-4">
-   {messageLoading && hasMore && (
-    <p className="py-2 text-center text-xs font-bold text-stone-400">
-     Loading...
-    </p>
-   )}
-   {messages.map((item, index) => (
-    <MessageItem
-     key={item._id ?? index}
-     message={item}
-     index={index}
-     messages={messages}
-     selectedConvo={selectConvesation}
-     lastMessageStatus={lastMessageStatus}
-    />
-   ))}
-   <div ref={messageEndRef}></div>
-  </div>
- );
+function UnreadSeparator() {
+  return (
+    <div className="my-3 flex items-center gap-3">
+      <div className="h-0.5 flex-1 bg-red-400" />
+      <span className="border-2 border-black bg-red-400 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+        New messages
+      </span>
+      <div className="h-0.5 flex-1 bg-red-400" />
+    </div>
+  );
 }
 
 interface MessageItemProps {
- message: Message;
- index: number;
- messages: Message[];
- selectedConvo: Conversation;
- lastMessageStatus: "delivered" | "seen";
+  message: Message;
+  index: number;
+  messages: Message[];
+  selectedConvo: Conversation;
+  lastMessageStatus: "delivered" | "seen";
+  onRetry: (conversationId: string, messageId: string) => Promise<void>;
 }
 
-function MessageItem({
- message,
- index,
- messages,
- selectedConvo,
- lastMessageStatus,
+const MessageItem = memo(function MessageItem({
+  message,
+  index,
+  messages,
+  selectedConvo,
+  lastMessageStatus,
+  onRetry,
 }: MessageItemProps) {
- const prev = index > 0 ? messages[index - 1] : undefined;
+  const prev = index > 0 ? messages[index - 1] : undefined;
 
- const isShowTime =
-  index === 0 ||
-  new Date(message.createdAt).getTime() -
-   new Date(prev?.createdAt || 0).getTime() >
-   300000;
+  const isShowTime =
+    index === 0 ||
+    new Date(message.createdAt).getTime() -
+      new Date(prev?.createdAt || 0).getTime() >
+      300000;
 
- const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
+  const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
 
- const participant = selectedConvo.participants.find(
-  (p: Participant) => p._id?.toString() === message.senderId?.toString()
- );
+  const participant = selectedConvo.participants.find(
+    (p: Participant) => p._id?.toString() === message.senderId?.toString()
+  );
 
- const isOwn = message.isOwn;
+  const isOwn = message.isOwn;
 
- const isLastMessage = index === messages.length - 1;
- const shouldShowStatus = isOwn && isLastMessage;
- const otherUser = selectedConvo.participants.find(
-  (p: Participant) => p._id?.toString() !== message.senderId?.toString()
- );
+  const isLastMessage = index === messages.length - 1;
+  const shouldShowStatus = isOwn && isLastMessage;
+  const isFailed = message.status === "failed";
+  const isSending = message.status === "sending";
+  const otherUser = selectedConvo.participants.find(
+    (p: Participant) => p._id?.toString() !== message.senderId?.toString()
+  );
 
- // Debug participant matching in development
- if (process.env.NODE_ENV === "development") {
-  // Uncomment to debug: console.log("[DEBUG participants]", { senderId: message.senderId, participants: selectedConvo.participants.map(p => ({ _id: p._id, name: p.displayName, match: p._id === message.senderId })) });
- }
-
- return (
-  <div
-   className={`mt-[2px] flex w-full gap-4 ${
-    isOwn ? "flex-row-reverse self-end" : ""
-   }`}
-  >
-   {isGroupBreak ? (
-    <div className="flex-shrink-0">
-     {participant?.avatarUrl ? (
-      <Image
-       src={participant.avatarUrl}
-       alt={participant?.displayName}
-       width={48}
-       height={48}
-       className="h-12 w-12 border-4 border-on-surface object-cover"
-      />
-     ) : (
-      <div
-       className={`flex h-12 w-12 items-center justify-center border-4 border-on-surface text-sm font-black ${
-        isOwn ? "bg-primary-container" : "bg-white"
-       }`}
-      >
-       {participant?.displayName?.charAt(0)?.toUpperCase()}
-      </div>
-     )}
-    </div>
-   ) : (
-    <div className="w-12 flex-shrink-0" />
-   )}
-
-   {/* Content */}
-   <div
-    className={`flex flex-col gap-1 ${isOwn ? "items-end" : "items-start"}`}
-   >
-    {isGroupBreak && (
-     <span
-      className={`text-[10px] font-black uppercase tracking-widest text-stone-400 ${
-       isOwn ? "mr-1" : "ml-1"
-      }`}
-     >
-      {isOwn ? "You" : participant?.displayName} •{" "}
-      {formatMessageTime(new Date(message.createdAt))}
-     </span>
-    )}
-
-    {/* Bubble */}
+  return (
     <div
-     className={`editorial-shadow relative border-4 border-black p-4 ${
-      isOwn ? "bg-primary-container" : "bg-surface-container-lowest"
-     }`}
+      className={`mt-[2px] flex w-full gap-4 ${
+        isOwn ? "flex-row-reverse self-end" : ""
+      }`}
     >
-     <p className="font-body text-on-background">{message.content}</p>
-    </div>
+      {isGroupBreak ? (
+        <div className="flex-shrink-0">
+          {participant?.avatarUrl ? (
+            <Image
+              src={participant.avatarUrl}
+              alt={participant?.displayName}
+              width={48}
+              height={48}
+              className="h-12 w-12 border-4 border-on-surface object-cover"
+            />
+          ) : (
+            <div
+              className={`flex h-12 w-12 items-center justify-center border-4 border-on-surface dark:border-dark-border-subtle text-sm font-black ${
+                isOwn ? "bg-primary-container dark:bg-dark-accent/25" : "bg-white dark:bg-dark-bg-card"
+              }`}
+            >
+              {participant?.displayName?.charAt(0)?.toUpperCase()}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="w-12 flex-shrink-0" />
+      )}
 
-    {shouldShowStatus && (
-     <div className="mr-1 mt-1 flex items-center justify-end">
-      <MessageStatusIcon
-       status={lastMessageStatus}
-       participant={otherUser}
-      />
-     </div>
-    )}
-   </div>
-  </div>
- );
-}
+      {/* Content */}
+      <div
+        className={`flex flex-col gap-1 ${isOwn ? "items-end" : "items-start"}`}
+      >
+        {isGroupBreak && (
+          <span
+            className={`text-[10px] font-black uppercase tracking-widest text-stone-400 dark:text-dark-text-tertiary ${
+              isOwn ? "mr-1" : "ml-1"
+            }`}
+          >
+            {isOwn ? "You" : participant?.displayName} •{" "}
+            {formatMessageTime(new Date(message.createdAt))}
+          </span>
+        )}
+
+        {/* Bubble */}
+        <div
+          className={`editorial-shadow relative max-w-[min(72vw,520px)] overflow-hidden border-4 border-black dark:border-dark-border-subtle ${
+            isOwn ? "bg-primary-container dark:bg-dark-accent/15" : "bg-surface-container-lowest dark:bg-dark-bg-card"
+          }`}
+        >
+          {message.imgUrl && (
+            <Image
+              src={message.imgUrl}
+              alt="Shared image"
+              width={520}
+              height={360}
+              className="max-h-80 w-full object-cover"
+            />
+          )}
+          {message.content && (
+            <p className="break-words p-4 font-body text-on-background dark:text-dark-text-primary">
+              {message.content}
+            </p>
+          )}
+        </div>
+
+        {shouldShowStatus && (
+          <div className="mr-1 mt-1 flex items-center justify-end">
+            {isFailed ? (
+              <button
+                type="button"
+                onClick={() => onRetry(message.conversationId, message._id)}
+                className="flex items-center gap-1 border-2 border-black dark:border-dark-border bg-red-400 dark:bg-red-700 px-2 py-1 text-[10px] font-black uppercase text-white"
+              >
+                <RotateCcw size={12} strokeWidth={3} />
+                Retry
+              </button>
+            ) : isSending ? (
+              <span className="text-[10px] font-black uppercase text-stone-400 dark:text-dark-text-tertiary">
+                Sending
+              </span>
+            ) : (
+              <MessageStatusIcon
+                status={lastMessageStatus}
+                participant={otherUser}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
 
 function MessageStatusIcon({
- status,
- participant,
+  status,
+  participant,
 }: {
- status: "delivered" | "seen";
- participant?: Participant;
+  status: "delivered" | "seen";
+  participant?: Participant;
 }) {
- if (status === "delivered") {
-  return (
-   <span className="text-xs text-gray-400">
-    <CircleCheck size={16} />
-   </span>
-  );
- }
+  if (status === "delivered") {
+    return (
+      <span className="text-xs text-gray-400 dark:text-dark-text-tertiary">
+        <CircleCheck size={16} />
+      </span>
+    );
+  }
 
- if (status === "seen") {
-  return participant?.avatarUrl ? (
-   <Image
-    src={participant.avatarUrl}
-    alt={participant.displayName}
-    width={16}
-    height={16}
-    className="h-4 w-4 rounded-full object-cover"
-   />
-  ) : (
-   <div className="flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] text-white">
-    {participant?.displayName?.charAt(0)}
-   </div>
-  );
- }
+  if (status === "seen") {
+    return participant?.avatarUrl ? (
+      <Image
+        src={participant.avatarUrl}
+        alt={participant.displayName}
+        width={16}
+        height={16}
+        className="h-4 w-4 rounded-full object-cover"
+      />
+    ) : (
+      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-black dark:bg-dark-accent text-[10px] text-white dark:text-dark-accent-on">
+        {participant?.displayName?.charAt(0)}
+      </div>
+    );
+  }
 
- return null;
+  return null;
 }

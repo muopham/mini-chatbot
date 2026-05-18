@@ -31,14 +31,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background-light font-inter text-slate-900 dark:bg-background-dark dark:text-slate-100">
+    <div className="flex min-h-screen flex-col bg-background-light font-inter text-slate-900 dark:bg-dark-bg-surface dark:text-dark-text-primary">
       {/* Top Nav */}
       <nav className="flex w-full justify-center px-10 py-6">
         <div className="flex w-full max-w-[1440px] items-center justify-between">
           <Logo variant="yellow" />
           <Link
             href="/signup"
-            className="neo-border neo-shadow-sm neo-button bg-white px-6 py-2 font-inter text-sm font-bold transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-neo"
+            className="neo-border neo-shadow-sm neo-button bg-white dark:bg-dark-bg-card dark:text-dark-text-primary px-6 py-2 font-inter text-sm font-bold transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-neo"
           >
             Create Account
           </Link>
@@ -47,13 +47,13 @@ export default function LoginPage() {
 
       {/* Main */}
       <main className="flex flex-1 items-center justify-center p-6">
-        <div className="neo-border neo-shadow flex w-full max-w-[520px] flex-col gap-8 bg-white p-10">
+        <div className="neo-border neo-shadow flex w-full max-w-[520px] flex-col gap-8 bg-white dark:bg-dark-bg-card p-10">
           {/* Header */}
           <div className="text-center md:text-left">
-            <h1 className="mb-2 font-poppins text-4xl font-bold">
+            <h1 className="mb-2 font-poppins text-4xl font-bold dark:text-dark-text-primary">
               Welcome Back!
             </h1>
-            <p className="font-inter font-medium text-slate-600">
+            <p className="font-inter font-medium text-slate-600 dark:text-dark-text-tertiary">
               Please enter your details to sign in.
             </p>
           </div>
@@ -64,14 +64,14 @@ export default function LoginPage() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="flex flex-col gap-2">
-              <label className="font-inter text-sm font-bold uppercase tracking-wider">
+              <label className="font-inter text-sm font-bold uppercase tracking-wider dark:text-dark-text-secondary">
                 Username
               </label>
               <input
                 {...register("username")}
                 type="text"
                 placeholder="Enter your username"
-                className="neo-border h-14 w-full bg-background-light px-4 font-inter font-medium outline-none focus:border-black focus:ring-0"
+                className="neo-border h-14 w-full bg-background-light dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary px-4 font-inter font-medium outline-none focus:border-black dark:focus:border-dark-accent focus:ring-0"
               />
               {errors.username && (
                 <p className="mt-1 text-sm text-red-500">
@@ -81,10 +81,10 @@ export default function LoginPage() {
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <label className="font-inter text-sm font-bold uppercase tracking-wider">
+                <label className="font-inter text-sm font-bold uppercase tracking-wider dark:text-dark-text-secondary">
                   Password
                 </label>
-                <a href="#" className="font-inter text-xs font-bold underline">
+                <a href="#" className="font-inter text-xs font-bold underline dark:text-dark-text-tertiary">
                   Forgot?
                 </a>
               </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="neo-border h-14 w-full bg-background-light px-4 font-inter font-medium outline-none focus:border-black focus:ring-0"
+                className="neo-border h-14 w-full bg-background-light dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary px-4 font-inter font-medium outline-none focus:border-black dark:focus:border-dark-accent focus:ring-0"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-500">
@@ -128,7 +128,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center font-inter font-medium">
+          <p className="text-center font-inter font-medium dark:text-dark-text-tertiary">
             Don&apos;t have an account?{" "}
             <Link
               href="/signup"

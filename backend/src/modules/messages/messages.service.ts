@@ -36,8 +36,8 @@ export class MessagesService {
     const { recipientId, content, conversationId, imgUrl } = dto;
     let conversation: ConversationDocument | null = null;
 
-    if (!content) {
-      return new BadRequestException('Content is required');
+    if (!content && !imgUrl) {
+      throw new BadRequestException('Content or image is required');
     }
 
     if (conversationId) {
@@ -81,8 +81,8 @@ export class MessagesService {
   ) {
     const { conversationId, content, imgUrl } = dto;
 
-    if (!content) {
-      return new BadRequestException('Content is required');
+    if (!content && !imgUrl) {
+      throw new BadRequestException('Content or image is required');
     }
 
     const message = await this.messageModel.create({

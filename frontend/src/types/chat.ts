@@ -53,4 +53,6 @@ export interface Message {
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+  status?: "sending" | "sent" | "failed";
+  localId?: string;
 }

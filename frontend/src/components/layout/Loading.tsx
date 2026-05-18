@@ -47,17 +47,27 @@ export default function Loading() {
         <div className="w-full">
           <div className="relative h-10 w-full border-4 border-black bg-white p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <div
-              className="h-full border-r-4 border-black bg-orange-500 transition-all duration-300"
-              style={{ width: "68%" }}
+              className="h-full border-r-4 border-black bg-orange-500"
+              style={{
+                animation: "loading-progress 1.8s ease-in-out infinite",
+              }}
             />
           </div>
 
           <div className="mt-4 flex justify-center">
             <span className="bg-black px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
-              Connecting... 68%
+              Connecting...
             </span>
           </div>
         </div>
+
+        <style>{`
+          @keyframes loading-progress {
+            0%   { width: 10%; }
+            50%  { width: 80%; }
+            100% { width: 10%; }
+          }
+        `}</style>
       </main>
 
       {/* Corners */}

@@ -23,6 +23,7 @@ export class FriendsController {
     @CurrentUser() user: { userId: string },
     @Body() body: { to: string; message?: string },
   ) {
+    console.log('[DEBUG] sendFriendRequest - from:', user.userId, 'to:', body.to);
     return await this.friendsService.sendFriendRequest(
       user.userId,
       body.to,
@@ -61,6 +62,7 @@ export class FriendsController {
 
   @Get('requests')
   async getFriendRequests(@CurrentUser() user: { userId: string }) {
+    console.log('[DEBUG] getFriendRequests - userId:', user.userId);
     return await this.friendsService.getFriendRequests(user.userId);
   }
 

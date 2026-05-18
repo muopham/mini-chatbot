@@ -33,16 +33,16 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background-light font-inter dark:bg-background-dark">
+    <div className="flex min-h-screen flex-col bg-background-light font-inter dark:bg-dark-bg-surface">
       {/* Header */}
       <nav className="flex w-full justify-center px-10 py-6">
         <div className="flex w-full max-w-[1440px] items-center justify-between">
           <Logo variant="yellow" />
           <Link
             href="/login"
-            className="neo-border neo-shadow-hover flex items-center justify-center bg-white p-2 transition-all"
+            className="neo-border neo-shadow-hover flex items-center justify-center bg-white dark:bg-dark-bg-card p-2 transition-all"
           >
-            <span className="material-symbols-outlined font-bold text-black">
+            <span className="material-symbols-outlined font-bold text-black dark:text-dark-text-primary">
               arrow_back
             </span>
           </Link>
@@ -51,13 +51,13 @@ export default function SignupPage() {
 
       {/* Main */}
       <main className="flex flex-1 flex-col items-center justify-center p-8 md:p-20">
-        <div className="neo-border neo-shadow flex w-full max-w-[560px] flex-col gap-8 bg-white p-10 dark:bg-slate-800">
+        <div className="neo-border neo-shadow flex w-full max-w-[560px] flex-col gap-8 bg-white dark:bg-dark-bg-card p-10">
           {/* Heading */}
           <div className="flex flex-col gap-2">
-            <h1 className="font-poppins text-5xl font-bold uppercase leading-tight tracking-tighter text-black dark:text-white">
+            <h1 className="font-poppins text-5xl font-bold uppercase leading-tight tracking-tighter text-black dark:text-dark-text-primary">
               Create Account
             </h1>
-            <p className="font-inter text-lg font-medium text-slate-600 dark:text-slate-400">
+            <p className="font-inter text-lg font-medium text-slate-600 dark:text-dark-text-tertiary">
               Join room chat and start connecting with others!
             </p>
           </div>
@@ -68,14 +68,14 @@ export default function SignupPage() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="flex flex-col gap-2">
-              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-white">
+              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-dark-text-secondary">
                 Full Name
               </label>
               <input
                 {...register("displayName")}
                 type="text"
                 placeholder="John Doe"
-                className="neo-border w-full bg-background-light p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0 dark:bg-slate-700"
+                className="neo-border w-full bg-background-light dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0"
               />
               {errors.displayName && (
                 <p className="text-destructive text-sm text-red-400">
@@ -84,14 +84,14 @@ export default function SignupPage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-white">
+              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-dark-text-secondary">
                 Username
               </label>
               <input
                 {...register("username")}
                 type="text"
                 placeholder="johnDoe"
-                className="neo-border w-full bg-background-light p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0 dark:bg-slate-700"
+                className="neo-border w-full bg-background-light dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0"
               />
               {errors.username && (
                 <p className="text-destructive text-sm text-red-400">
@@ -100,14 +100,14 @@ export default function SignupPage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-white">
+              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-dark-text-secondary">
                 Email Address
               </label>
               <input
                 {...register("email")}
                 type="email"
                 placeholder="john@example.com"
-                className="neo-border w-full bg-background-light p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0 dark:bg-slate-700"
+                className="neo-border w-full bg-background-light dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0"
               />
               {errors.email && (
                 <p className="text-destructive text-sm text-red-400">
@@ -116,7 +116,7 @@ export default function SignupPage() {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-white">
+              <label className="font-inter text-sm font-bold uppercase tracking-wider text-black dark:text-dark-text-secondary">
                 Password
               </label>
               <input
@@ -124,7 +124,7 @@ export default function SignupPage() {
                 type="password"
                 placeholder="••••••••"
                 autoComplete="new-password"
-                className="neo-border w-full bg-background-light p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0 dark:bg-slate-700"
+                className="neo-border w-full bg-background-light dark:bg-dark-bg-input dark:text-dark-text-primary dark:placeholder:text-dark-text-tertiary p-4 font-inter text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0"
               />
               {errors.password && (
                 <p className="text-destructive text-sm text-red-400">
@@ -152,12 +152,12 @@ export default function SignupPage() {
           {/* Action */}
           <div className="mt-2 flex flex-col gap-4">
             <div className="mt-2 flex items-center justify-center gap-2 font-inter">
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-slate-600 dark:text-dark-text-tertiary">
                 Already have an account?
               </span>
               <Link
                 href="/login"
-                className="px-1 font-bold text-black underline decoration-accent-yellow decoration-4 transition-colors hover:bg-accent-yellow dark:text-white"
+                className="px-1 font-bold text-black underline decoration-accent-yellow decoration-4 transition-colors hover:bg-accent-yellow dark:text-dark-text-primary"
               >
                 Log In
               </Link>

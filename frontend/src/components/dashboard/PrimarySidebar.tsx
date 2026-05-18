@@ -72,8 +72,8 @@ export default function PrimarySidebar({
 
   return (
     <>
-      <aside className="z-20 flex h-full w-16 flex-col items-center border-r-4 border-black bg-[#F4EEDB] py-4">
-        <div className="mb-6">
+      <aside className="z-20 flex h-16 w-full flex-row items-center border-b-4 border-black bg-[#F4EEDB] dark:border-dark-border dark:bg-dark-bg-sidebar px-3 md:h-full md:w-16 md:flex-col md:border-b-0 md:border-r-4 md:px-0 md:py-4">
+        <div className="mr-3 md:mb-6 md:mr-0">
           <Logo size="sm" showText={false} variant="yellow" />
         </div>
 
@@ -83,10 +83,10 @@ export default function PrimarySidebar({
           title={isSecondaryOpen ? "Hide sidebar" : "Show sidebar"}
           aria-label={isSecondaryOpen ? "Hide sidebar" : "Show sidebar"}
           aria-pressed={isSecondaryOpen}
-          className={`mb-6 flex size-11 items-center justify-center border-2 border-black text-stone-800 transition-colors ${
+          className={`mr-3 flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle text-stone-800 dark:text-dark-text-secondary transition-colors md:mb-6 md:mr-0 ${
             isSecondaryOpen
               ? "editorial-shadow bg-accent-yellow"
-              : "bg-white hover:bg-accent-yellow/60"
+              : "bg-white dark:bg-dark-bg-card hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
           }`}
         >
           <span className="material-symbols-outlined text-xl">
@@ -94,7 +94,7 @@ export default function PrimarySidebar({
           </span>
         </button>
 
-        <div className="flex flex-1 flex-col items-center gap-3">
+        <div className="flex flex-1 flex-row items-center gap-3 overflow-x-auto md:flex-col md:overflow-visible">
           {mainItems.map((item) => {
             const isActive = activeMainItem === item.id;
             const isContacts = item.id === "contacts";
@@ -106,10 +106,10 @@ export default function PrimarySidebar({
                   onClick={() => onMainItemChange(item.id)}
                   title={item.label}
                   aria-label={item.label}
-                  className={`flex size-11 items-center justify-center border-2 border-black text-stone-800 transition-colors ${
+                  className={`flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle text-stone-800 dark:text-dark-text-secondary transition-colors ${
                     isActive
                       ? "editorial-shadow bg-accent-yellow"
-                      : "bg-white hover:bg-accent-yellow/60"
+                      : "bg-white dark:bg-dark-bg-card hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
                   }`}
                 >
                   <span className="material-symbols-outlined text-xl">
@@ -126,13 +126,13 @@ export default function PrimarySidebar({
           })}
         </div>
 
-        <div className="mt-6 flex flex-col items-center gap-3">
+        <div className="ml-3 flex flex-row items-center gap-3 md:ml-0 md:mt-6 md:flex-col">
           <button
             type="button"
             onClick={handleThemeToggle}
             title="Theme"
             aria-label="Theme"
-            className="flex size-11 items-center justify-center border-2 border-black bg-white text-stone-800 transition-colors hover:bg-accent-yellow/60"
+            className="flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle bg-white dark:bg-dark-bg-card text-stone-800 dark:text-dark-text-secondary transition-colors hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
           >
             <span className="material-symbols-outlined text-xl">
               {isDark ? "dark_mode" : "light_mode"}
@@ -144,7 +144,7 @@ export default function PrimarySidebar({
             onClick={handleLogout}
             title="Logout"
             aria-label="Logout"
-            className="flex size-11 items-center justify-center border-2 border-black bg-white text-stone-800 transition-colors hover:bg-accent-yellow/60"
+            className="flex size-11 items-center justify-center border-2 border-black dark:border-dark-border-subtle bg-white dark:bg-dark-bg-card text-stone-800 dark:text-dark-text-secondary transition-colors hover:bg-accent-yellow/60 dark:hover:bg-dark-accent/20"
           >
             <span className="material-symbols-outlined text-xl">logout</span>
           </button>

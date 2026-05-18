@@ -33,7 +33,7 @@ api.interceptors.response.use(
     if (
       !originalRequest._retry &&
       error.response &&
-      error.response?.status === 403
+      (error.response?.status === 403 || error.response?.status === 401)
     ) {
       originalRequest._retry = true;
 
